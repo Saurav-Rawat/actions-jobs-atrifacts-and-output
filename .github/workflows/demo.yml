@@ -18,6 +18,16 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    # outputs are used to share information between jobs.
+    # eg = we have to share the name of the randomly generated file name with
+    # some job(in our case index file inside dist/assets/index[somerandomtex].js)
+    # we can obviously take the whole file in artifact and get that in other job but if we only want to share some info
+    # which in this case is name of file
+    outputs:
+      # output identifier (name upto us also we can define as many as we want) we will use it later in other jobs to access output information.
+      # we are using steps context to access the infomations generated in step
+      # file-name is variable that we set in step
+      script-file: ${{ steps.publish.outputs.file-name }}
     steps:
       - name: Get code
         uses: actions/checkout@v3
@@ -25,6 +35,15 @@ jobs:
         run: npm ci
       - name: Build website
         run: npm run build
+      - name: Publish JS filename
+        # bellow id will be used to identify the step where we are generating output so we can use it in other jobs
+        id: publish
+        # bellow command is a linux command that will
+        # 1. find the file(find dist/assets/*.js -type f)
+        # 2. exectute echo command to print file name (-execdir echo "{}" ';')
+        # {} this placeholder contains the file name we store in output name (file-name)
+        #  >> $GITHUB_OUTPUT this command will target a special github file where output will be written
+        run: find dist/assets/*.js -type f -execdir echo "file-name={}" >> $GITHUB_OUTPUT ';'
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         # additional configurations of action
@@ -47,6 +66,7 @@ jobs:
       - name: get build artifacts
         # bellow action(actions/download-artifact@v3) will download the artifacts generated in previous build job
         # and unzip them so we have access of the artifacts in deploy job
+        # note: bellow command will give us the unzipped contents of dist file and not the dist file
         uses: actions/download-artifact@v3
         with:
           # bellow identifier is necessary to target the correct artifact
@@ -54,5 +74,10 @@ jobs:
       # print artifact contents
       - name: Output Content
         run: ls
+      - name: Output filename
+        # to access outputs we use needs context
+        # above we have given build as a job in needs so we can access all the outputs that
+        # were generated in the build job
+        run: echo "${{ needs.build.outputs.script-file }}"
       - name: Deploy
         run: echo "Deploying..."
