@@ -2,7 +2,7 @@ name: Deploy website
 on:
   push:
     branches:
-      - main
+      - master
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -25,6 +25,18 @@ jobs:
         run: npm ci
       - name: Build website
         run: npm run build
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        # additional configurations of action
+        with:
+          # name that we will use to retrive the files
+          name: dist-files
+          # path specifies which files we want to store as artifact
+          # we can specify multiple files using | (pipe) symbol
+          # for our case we only need one i.e dist file but for sake of learning we are storing two
+          path: |
+            dist
+            package-json
   deploy:
     needs: build
     runs-on: ubuntu-latest
