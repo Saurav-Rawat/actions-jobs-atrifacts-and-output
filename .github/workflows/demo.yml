@@ -50,6 +50,7 @@ jobs:
       - name: Cache dependenies
         # new cache wont be create in bellow step if one cache already exist for given key
         # as actions/cache@v3 uses one centrelised space for storing cache
+        # for future workflow jobs as well this cache will be used as long as we dont add new dependencies
         uses: actions/cache@v3
         with:
           path: ~/.npm
